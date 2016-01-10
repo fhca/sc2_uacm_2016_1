@@ -1,6 +1,6 @@
 # Programas básicos para aprender Netlogo
 
-La serie de ejemplos debe ser leida en este orden:
+La serie de ejemplos debe ser leída en este orden:
 
-* `parches-verdes.nlogo`
-* `avanza-tortugas.nlogo`
+1. `parches-verdes.nlogo`
+1. `avanza-tortugas.nlogo`
