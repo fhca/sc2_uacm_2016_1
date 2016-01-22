@@ -11,10 +11,11 @@ end
 
 to go
   ask turtles [
-    set heading random 360
+    rt random 40 - 20
     fd .1
     if color = green and any? (turtles-on neighbors) with [color = red] [ ; se infecta si hay una roja cerca
       set color red
+      ;create-link-with one-of ((turtles-on neighbors) with [color = red])
     ]
   ]
   tick
@@ -108,8 +109,8 @@ SLIDER
 poblacion
 poblacion
 0
-1000
-319
+300
+249
 1
 1
 personas
