@@ -1,5 +1,5 @@
-globals [entrada salida cajas bases banderas productos]
-turtles-own [ bandera-siguiente lista ]
+globals [entrada salida cajas bases banderas productos satisfaccion-global]
+turtles-own [ bandera-siguiente lista productos-existentes ]
 patches-own [cant-producto]
 
 to setup
@@ -21,10 +21,12 @@ to setup
   ask bases [
     anaquel self
   ]
-  set banderas (list patch -13 -14 patch -3 -14 patch -3 10 patch 4 10 patch 4 -14 patch 13 -14 patch 13 10)
+  set banderas (list patch -13 -14 patch -3 -14 patch -3 10 patch 4 10
+    patch 4 -14 patch 13 -14 patch 13 10)
   reset-ticks
 end
 
+; construye anaquel con cierto parche base (en su centro)
 to anaquel [base] ; base = parche central
   ask patches with [
     pxcor > [pxcor - 2] of base and pxcor < [pxcor + 2] of base and
@@ -35,6 +37,7 @@ to anaquel [base] ; base = parche central
   poner-productos base
 end
 
+; pone los productos en el anaquel que tiene el parche base
 to poner-productos [base]
   ask patches with [
     pxcor = [pxcor - 1] of base or pxcor = [pxcor + 1] of base and
@@ -52,14 +55,15 @@ end
 to nuevo-cliente
   ask one-of entrada [
     sprout 1 [
-      set heading 180
       set bandera-siguiente 0
+      face item bandera-siguiente banderas
       set lista []
       repeat random 30 + 1 [
         let tono-base random length productos
         let p (item tono-base productos) + (0.5 * (random 19 + 1))
         set lista lput p lista
       ]
+      set productos-existentes []
     ]
   ]
 end
@@ -83,21 +87,69 @@ to mueve-tortugas
       ]
     ]
     revisa-productos
+    saliendo
   ]
 end
 
 to revisa-productos
-  let productos-que-veo patches in-radius 6 with [pcolor != black or pcolor != gray or
-     pcolor != green or pcolor != red or pcolor != yellow]
+  let productos-que-veo patches in-radius 6 with [pcolor != black or
+    pcolor != green or pcolor != red or pcolor != yellow]
+  ;eliminar anaqueles y los productos mas alla de los anaqueles (que no puedo ver)
+  let nproductos no-patches
+  let xgray 0
+  if any? productos-que-veo with [pcolor = gray]
+  [
+    set xgray [pxcor] of one-of productos-que-veo with [pcolor = gray]
+    if xgray < xcor [
+      ask productos-que-veo [
+        if pxcor > xgray [
+          set nproductos (patch-set nproductos self)
+        ]
+      ]
+    ]
+  ]
+  if any? nproductos with [pcolor = gray]
+  [
+    set xgray [pxcor] of one-of nproductos with [pcolor = gray]
+    set productos-que-veo no-patches
+    if xgray > xcor [
+      ask nproductos [
+        if pxcor < xgray [
+          set productos-que-veo (patch-set productos-que-veo self)
+        ]
+      ]
+    ]
+  ]
+  let mis-productos-existentes productos-existentes
+  let mi-lista lista
   ask productos-que-veo [
-  ;  let encontrados filter [pcolor = ?] lista
-  ;  if pcolor [
-  ;    set lista remove pcolor lista
-  ;    set cant-producto cant-producto - 1
-  ;    if cant-producto = 0 [
-  ;      set pcolor gray
-  ;    ]
-  ;  ]
+    let producto self
+    let indice 0
+    let nlista mi-lista
+    foreach nlista [
+      ifelse [pcolor] of producto = ? [ ; la lista es una lista de colores
+        set mis-productos-existentes (list mis-productos-existentes ?) ;lo agrega
+        set mi-lista remove-item indice mi-lista
+        ask producto [
+          set cant-producto cant-producto - 1
+          if cant-producto = 0 [
+            set pcolor black ; no puede ser gray pues borraría productos existentes
+          ]
+        ]
+      ]
+      [
+        set indice indice + 1
+      ]
+    ]
+  ]
+  set productos-existentes mis-productos-existentes
+  set lista mi-lista
+end
+
+to saliendo
+  if member? patch-here salida [
+    set satisfaccion-global length productos-existentes / (length productos-existentes + length lista)
+    die
   ]
 end
 @#$#@#$#@
@@ -161,6 +213,24 @@ NIL
 NIL
 NIL
 1
+
+PLOT
+7
+220
+207
+370
+satisfacción
+NIL
+0
+0.0
+10.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot satisfaccion-global"
 
 @#$#@#$#@
 ## WHAT IS IT?
